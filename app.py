@@ -1,16 +1,15 @@
 import torch
-import numpy as np
-import gradio as gr
-from torchvision.utils import make_grid
-from torchvision import transforms
-import random
-from PIL import Image
 import torch.nn as nn
+import numpy as np
+from torchvision.utils import make_grid
+from PIL import Image
+import gradio as gr
 
-# ====== Modelo ======
-
+# ----------------------
+# Modelo DCGAN (Generator)
+# ----------------------
 class Generator(nn.Module):
-    def __init__(self, latent_dim=128, feature=64, channels=3):
+    def __init__(self, latent_dim=100, feature=64, channels=3):
         super().__init__()
         self.model = nn.Sequential(
             nn.ConvTranspose2d(latent_dim, feature*8, 4, 1, 0, bias=False),
@@ -36,44 +35,40 @@ class Generator(nn.Module):
     def forward(self, z):
         return self.model(z)
 
-# ====== Cargar modelo ======
+# ----------------------
+# Cargar modelo entrenado
+# ----------------------
+device = "cuda" if torch.cuda.is_available() else "cpu"
+latent_dim = 100  # el del experimento 1
+feature = 64
 
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-latent_dim = 128
-
-G = Generator(latent_dim=latent_dim, feature=64).to(device)
+G = Generator(latent_dim=latent_dim, feature=feature).to(device)
 G.load_state_dict(torch.load("exp1_base_G.pth", map_location=device))
 G.eval()
 
-# ====== Inferencia ======
 
+# ----------------------
+# Función: generar 1 logo
+# ----------------------
 def generar_logo():
     with torch.no_grad():
-        z = torch.randn(1, latent_dim, 1, 1, device=device)
-        fake = G(z)[0].cpu()
-    # convertir a imagen PIL
-        img = (fake + 1) / 2
-        img = transforms.ToPILImage()(img)
-    return img
+        noise = torch.randn(1, latent_dim, 1, 1, device=device)
+        img = G(noise).cpu()[0]
 
-# ====== CSS ======
+    img = (img * 0.5 + 0.5).clamp(0, 1)  # desnormalizar
+    img = img.permute(1, 2, 0).numpy()  # CHW → HWC
+    img = (img * 255).astype(np.uint8)
+    return Image.fromarray(img)
 
-css = """
-body {background: #111;}
-h1 {text-align:center; color:white;}
-button {border-radius: 10px;}
-"""
-
-# ====== Interfaz ======
-
-with gr.Blocks() as demo:
-    gr.HTML(f"<style>{css}</style>")
-    gr.Markdown("# 🎨 Generador de Logos con DCGAN")
-    gr.Markdown("Exp1 — Modelo 64x64 entrenado con SimpleIcons")
-
-    output = gr.Image(label="Tu logo generado")
-
-    btn = gr.Button("✨ Nuevo Logo")
-    btn.click(fn=generar_logo, outputs=output)
+# ----------------------
+# Interfaz Gradio
+# ----------------------
+demo = gr.Interface(
+    fn=generar_logo,
+    inputs=None,
+    outputs=gr.Image(label="Logo generado"),
+    title="Generador de Logos – DCGAN Exp1",
+    description="Haz clic para generar un logo distinto cada vez."
+)
 
 demo.launch()
