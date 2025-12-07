@@ -1,4 +1,12 @@
 ---
+🤖 GANs para Generación de Logos
+---
+
+Link  publico:
+
+https://huggingface.co/spaces/nkrojas/Generador_Logos
+
+---
 title: Generador Logos
 emoji: 🐠
 colorFrom: purple
@@ -15,10 +23,8 @@ Check out the configuration reference at https://huggingface.co/docs/hub/spaces-
 
 
 --- 
-GANs para Generación de Logos
----
-
 Descripción General:
+---
 
 
 Este proyecto implementa y compara tres arquitecturas de Redes Generativas Adversariales (GANs) basadas en el modelo DCGAN para la tarea de generación de imágenes de logos. Los experimentos evalúan el impacto de diferentes técnicas de normalización y regularización en la estabilidad del entrenamiento y en la calidad de las imágenes generadas, medidas a través de las métricas FID e Inception Score.
